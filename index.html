@@ -21,7 +21,7 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Konfiguracja Elektronowa - Gra (Wersja 5.1 - Dłuższy Skok)</title>
+    <title>Konfiguracja Elektronowa - Gra (Wersja 6.0 - Double Jump)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,14 +30,16 @@
         body { font-family: 'Lato', sans-serif; background-color: #f3f4f6; }
         h1, h2, h3, #level-title, .obstacle-text { font-family: 'Roboto Mono', monospace; font-weight: 700; }
         
-        /* ZMIENIONE: Dłuższy, bardziej paraboliczny skok */
+        /* ZMIENIONE: Poprawiona animacja, piłka wraca na swoje miejsce */
         @keyframes jump {
             0%   { bottom: 5px;  left: 8rem; }
-            50%  { bottom: 240px; left: 12rem; } /* Zwiększone wychylenie do przodu */
-            100% { bottom: 5px;  left: 14rem; }
+            50%  { bottom: 230px; left: 12rem; }
+            100% { bottom: 5px;  left: 8rem; }
         }
         
-        .jumping { animation: jump 1.0s ease-out; }
+        /* ZMIENIONE: Skrócony czas skoku dla lepszej responsywności */
+        .jumping { animation: jump 1.2s ease-out; }
+
         @keyframes obstacle-move { from { right: -250px; } to { right: 150%; } }
         .obstacle { animation-name: obstacle-move; animation-timing-function: linear; }
         .electron { animation: fadeIn 0.3s ease-in; }
@@ -53,7 +55,6 @@
     </div>
 
     <div id="game-container" class="relative w-full max-w-5xl h-[26rem] bg-white border-2 border-gray-300 rounded-lg overflow-hidden shadow-lg">
-        
         <div id="start-screen" class="absolute inset-0 bg-white/95 p-6 flex justify-center items-center z-30">
             <div id="start-screen-content" class="text-center max-w-3xl overflow-y-auto max-h-full">
                 <h2 class="text-2xl text-gray-800 mb-4">Jak Grać?</h2>
@@ -68,7 +69,7 @@
                     </div>
                     <div>
                         <h3 class="text-pink-500 mb-1">3. UNIKAJ PUŁAPEK</h3>
-                        <p class="text-sm leading-relaxed text-gray-600">Wszystkie inne bloki (czerwone) to pułapki. <strong>Przeskakuj nad nimi</strong>, aby nie przegrać! Dotyczy to także orbitali, które już w pełni zapełniłeś.</p>
+                        <p class="text-sm leading-relaxed text-gray-600">Wszystkie inne bloki (czerwone) to pułapki. <strong>Przeskakuj nad nimi</strong>. Możesz wykonać **podwójny skok**, dotykając ekranu ponownie, gdy jesteś w powietrzu!</p>
                     </div>
                 </div>
                 <p class="start-prompt text-gray-600 text-lg animate-pulse">Naciśnij SPACJĘ, aby rozpocząć</p>
@@ -89,8 +90,8 @@
     </div>
     
     <script>
-    // Cały skrypt JavaScript pozostaje bez zmian.
     (function() {
+        // ... stałe bez zmian ...
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('game-container');
         const stats = document.getElementById('stats');
@@ -115,6 +116,9 @@
         
         let gameState = {
             isJumping: false,
+            // DODANE: Stany dla podwójnego skoku
+            jumpsMade: 0,
+            maxJumps: 2,
             gameOver: true,
             gameStarted: false,
             levelScreenActive: false,
@@ -127,6 +131,8 @@
             trapChance: 0.4,
             lastSpawnedShell: null,
         };
+
+        // --- Główne funkcje gry ---
 
         function initializeGame() {
             startScreen.classList.remove('hidden');
@@ -166,46 +172,31 @@
             levelStartScreen.classList.add('hidden');
             gameState.progress = {};
             gameState.gameOver = false;
+            gameState.jumpsMade = 0; // Resetuj skoki na start
             gameState.lastSpawnedShell = null;
             document.querySelectorAll('.obstacle').forEach(o => o.remove());
             updateUI();
             gameLoop();
             spawnObstacle();
         }
-        
-        function advanceToNextLevel() {
-            gameState.gameOver = true;
-            const nextLevelIndex = gameState.currentLevelIndex + 1;
-            
-            if (nextLevelIndex < levels.length) {
-                levelTitle.textContent = `Poziom ${gameState.currentLevelIndex + 1} ukończony!`;
-                setTimeout(() => showLevelStartScreen(nextLevelIndex), 2000);
-            } else {
-                endGame("Gratulacje! Ukończyłeś wszystkie poziomy!", true);
-            }
-        }
 
-        function endGame(reason, isVictory = false) {
-            gameState.gameOver = true;
-            document.querySelectorAll('.obstacle').forEach(o => o.style.animationPlayState = 'paused');
-            
-            const finalMessage = isVictory ? 
-                `<p class="text-green-500 text-2xl">${reason}</p>` :
-                `<p class="text-red-500 text-xl">KONIEC GRY!</p><p class="text-gray-600 mt-1">${reason}</p>`;
-
-            stats.innerHTML = `${finalMessage}<p class="start-prompt text-gray-600 mt-2 animate-pulse">Naciśnij SPACJĘ, aby zagrać ponownie.</p>`;
-            updatePrompts();
-        }
-
+        // --- ZMIENIONA: Logika skoku ---
         function jump() {
             gameState.isJumping = true;
+            gameState.jumpsMade++;
+            
+            // Reset animacji, aby podwójny skok był płynny
+            player.classList.remove('jumping');
+            void player.offsetWidth; // Sztuczka wymuszająca na przeglądarce ponowne przeliczenie stylów
             player.classList.add('jumping');
-            player.addEventListener('animationend', () => {
-                player.classList.remove('jumping');
-                gameState.isJumping = false;
-            }, { once: true });
         }
-        
+
+        function handleLanding() {
+            // Ta funkcja będzie wywoływana, gdy piłka wyląduje
+            gameState.isJumping = false;
+            gameState.jumpsMade = 0; // Zresetuj licznik skoków
+        }
+
         function handlePrimaryAction() {
             if (gameState.actionLocked) return;
             
@@ -226,10 +217,11 @@
                 initializeGame();
                 cooldown = 500;
             } else {
-                if (!gameState.isJumping) {
+                // ZMIENIONE: Logika dla podwójnego skoku
+                if (gameState.jumpsMade < gameState.maxJumps) {
                     gameState.actionLocked = true;
                     jump();
-                    cooldown = 300;
+                    cooldown = 200; // Krótszy cooldown dla responsywnych doskoków
                 }
             }
             
@@ -251,7 +243,12 @@
             e.preventDefault();
             handlePrimaryAction();
         }, { passive: false });
+        
+        // Nasłuchuj końca animacji, aby wykryć lądowanie
+        player.addEventListener('animationend', handleLanding);
 
+
+        // --- Reszta funkcji pomocniczych (bez zmian) ---
         function gameLoop() {
             if (gameState.gameOver) {
                 cancelAnimationFrame(gameState.gameLoopId);
@@ -261,6 +258,28 @@
             checkInteractions();
             cleanupObstacles();
             gameState.gameLoopId = requestAnimationFrame(gameLoop);
+        }
+        function advanceToNextLevel() {
+            gameState.gameOver = true;
+            const nextLevelIndex = gameState.currentLevelIndex + 1;
+            
+            if (nextLevelIndex < levels.length) {
+                levelTitle.textContent = `Poziom ${gameState.currentLevelIndex + 1} ukończony!`;
+                setTimeout(() => showLevelStartScreen(nextLevelIndex), 2000);
+            } else {
+                endGame("Gratulacje! Ukończyłeś wszystkie poziomy!", true);
+            }
+        }
+        function endGame(reason, isVictory = false) {
+            gameState.gameOver = true;
+            document.querySelectorAll('.obstacle').forEach(o => o.style.animationPlayState = 'paused');
+            
+            const finalMessage = isVictory ? 
+                `<p class="text-green-500 text-2xl">${reason}</p>` :
+                `<p class="text-red-500 text-xl">KONIEC GRY!</p><p class="text-gray-600 mt-1">${reason}</p>`;
+
+            stats.innerHTML = `${finalMessage}<p class="start-prompt text-gray-600 mt-2 animate-pulse">Naciśnij SPACJĘ, aby zagrać ponownie.</p>`;
+            updatePrompts();
         }
         function checkInteractions() {
             const playerRect = player.getBoundingClientRect();
@@ -281,10 +300,8 @@
                             if (currentElectrons < targetElectrons) {
                                 gameState.progress[obstacle.dataset.shell] = currentElectrons + 1;
                                 obstacle.dataset.filledThisTurn = 'true';
-                                
                                 redrawElectronsInObstacle(obstacle);
                                 updateUI();
-                                
                                 if (checkLevelCompletion()) {
                                     advanceToNextLevel();
                                 }
