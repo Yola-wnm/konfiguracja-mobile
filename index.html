@@ -21,7 +21,7 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Konfiguracja Elektronowa - Gra (Wersja 3.0 Poprawiona)</title>
+    <title>Konfiguracja Elektronowa - Gra (Wersja 4.0 Finalna)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -190,7 +190,7 @@
         }
 
         function jump() {
-            if (gameState.isJumping) return;
+            // Ta funkcja już jest poprawna, nie wymaga sprawdzania `isJumping`
             gameState.isJumping = true;
             player.classList.add('jumping');
             player.addEventListener('animationend', () => {
@@ -199,7 +199,7 @@
             }, { once: true });
         }
         
-        // --- ZMIENIONE: Przebudowana i uproszczona logika sterowania ---
+        // --- ZMIENIONE: Ostateczna, poprawna logika sterowania ---
         function handlePrimaryAction() {
             if (gameState.actionLocked) return;
             
@@ -208,22 +208,23 @@
             if (!gameState.gameStarted) {
                 gameState.actionLocked = true;
                 firstStart();
-                cooldown = 500; // Dłuższa przerwa na przejście między ekranami
+                cooldown = 500;
             } else if (gameState.levelScreenActive) {
                 gameState.actionLocked = true;
                 startLevelGameplay();
-                cooldown = 500; // Dłuższa przerwa na start gry
+                cooldown = 500;
             } else if (gameState.gameOver) {
                 gameState.actionLocked = true;
-                gameState.gameStarted = false; // Resetujemy stan
+                gameState.gameStarted = false;
                 gameState.currentLevelIndex = 0;
                 initializeGame();
-                cooldown = 500; // Dłuższa przerwa na powrót do menu
+                cooldown = 500;
             } else {
+                // POPRAWKA: Blokada jest ustawiana tylko wtedy, gdy skok jest możliwy
                 if (!gameState.isJumping) {
                     gameState.actionLocked = true;
                     jump();
-                    cooldown = 300; // Krótsza przerwa między skokami
+                    cooldown = 300;
                 }
             }
             
@@ -246,6 +247,17 @@
             handlePrimaryAction();
         }, { passive: false });
 
+        // --- Pozostałe funkcje gry bez zmian ---
+        function gameLoop() {
+            if (gameState.gameOver) {
+                cancelAnimationFrame(gameState.gameLoopId);
+                clearTimeout(gameState.obstacleSpawnerTimeout);
+                return;
+            }
+            checkInteractions();
+            cleanupObstacles();
+            gameState.gameLoopId = requestAnimationFrame(gameLoop);
+        }
         function checkInteractions() {
             const playerRect = player.getBoundingClientRect();
             for (const obstacle of document.querySelectorAll('.obstacle')) {
@@ -278,7 +290,6 @@
                 }
             }
         }
-        
         function checkLevelCompletion(){const targetConfig=levels[gameState.currentLevelIndex].config;for(const shell in targetConfig){if((gameState.progress[shell]||0)<targetConfig[shell]){return false}}return true}function getNextRequiredShell(){const targetConfig=levels[gameState.currentLevelIndex].config;for(const shell of configSequence){if(targetConfig[shell]&&(gameState.progress[shell]||0)<targetConfig[shell]){return shell}}return null}function spawnObstacle(){if(gameState.gameOver)return;const requiredShell=getNextRequiredShell();if(!requiredShell)return;const lastSpawned=gameState.lastSpawnedShell;const allLevelShells=Object.keys(levels[gameState.currentLevelIndex].config);let availableToSpawn=allLevelShells.filter(s=>s!==lastSpawned);if(availableToSpawn.length===0){availableToSpawn=allLevelShells}let shellToSpawn;const shouldSpawnRequired=Math.random()>gameState.trapChance;if(shouldSpawnRequired&&availableToSpawn.includes(requiredShell)){shellToSpawn=requiredShell}else{const trapPool=availableToSpawn.filter(s=>s!==requiredShell);if(trapPool.length>0){shellToSpawn=trapPool[Math.floor(Math.random()*trapPool.length)]}else{shellToSpawn=availableToSpawn[0]}}
         gameState.lastSpawnedShell=shellToSpawn;createObstacle(shellToSpawn);clearTimeout(gameState.obstacleSpawnerTimeout);gameState.obstacleSpawnerTimeout=setTimeout(spawnObstacle,Math.random()*1000+2500)}function cleanupObstacles(){const gameRect=gameContainer.getBoundingClientRect();document.querySelectorAll('.obstacle').forEach(obstacle=>{const obstacleRect=obstacle.getBoundingClientRect();if(obstacleRect.right<gameRect.left-50){obstacle.remove()}})}function redrawElectronsInObstacle(obstacle){const shell=obstacle.dataset.shell;const electronsToDraw=gameState.progress[shell]||0;const shellType=shell.charAt(1);const numBoxes=orbitalBoxes[shellType];const orbitalBoxesInObstacle=obstacle.querySelectorAll('[data-orbital-index]');orbitalBoxesInObstacle.forEach(box=>box.innerHTML='');for(let i=1;i<=electronsToDraw;i++){const electron=document.createElement('div');electron.classList.add('w-3','h-3','bg-orange-400','rounded-full','electron');const boxIndex=(i-1)%numBoxes;const targetBox=orbitalBoxesInObstacle[boxIndex];if(targetBox){targetBox.appendChild(electron)}}}
         function createObstacle(shell){const obstacle=document.createElement('div');const shellType=shell.charAt(1);const boxCount=orbitalBoxes[shellType]||1;let obstacleWidth='w-24';let borderColor='border-gray-400';if(shellType==='s'){obstacleWidth='w-12';borderColor='border-purple-400'}if(shellType==='p'){obstacleWidth='w-32';borderColor='border-orange-400'}if(shellType==='d'){obstacleWidth='w-48';borderColor='border-blue-400'}if(shellType==='f'){obstacleWidth='w-64';borderColor='border-red-500'}obstacle.classList.add('obstacle','absolute','bottom-1',obstacleWidth,'h-12','flex','flex-col','items-center','justify-center','rounded-md','border-2','p-1','bg-white','shadow');obstacle.dataset.shell=shell;obstacle.style.animationDuration=`${gameState.obstacleSpeed}s`;const requiredShell=getNextRequiredShell();const isTrap=(shell!==requiredShell);obstacle.dataset.isTrap=isTrap;const text=document.createElement('span');text.classList.add('obstacle-text','text-xs','text-gray-700');text.textContent=shell;const electronContainer=document.createElement('div');
