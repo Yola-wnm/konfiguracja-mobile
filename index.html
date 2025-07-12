@@ -19,10 +19,9 @@
             }
         }
     </script>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Konfiguracja Elektronowa - Gra (Wersja Poprawiona)</title>
+    <title>Konfiguracja Elektronowa - Gra (Wersja 3.0 Poprawiona)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,37 +29,26 @@
     <style>
         body { font-family: 'Lato', sans-serif; background-color: #f3f4f6; }
         h1, h2, h3, #level-title, .obstacle-text { font-family: 'Roboto Mono', monospace; font-weight: 700; }
-        @keyframes jump {
-            0%   { bottom: 5px; }
-            50%  { bottom: 240px; }
-            100% { bottom: 5px; }
-        }
+        @keyframes jump { 0% { bottom: 5px; } 50% { bottom: 240px; } 100% { bottom: 5px; } }
         .jumping { animation: jump 1.5s ease-out; }
-        @keyframes obstacle-move {
-            from { right: -250px; }
-            to   { right: 110%; }
-        }
+        @keyframes obstacle-move { from { right: -250px; } to { right: 110%; } }
         .obstacle { animation-name: obstacle-move; animation-timing-function: linear; }
         .electron { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.5); }
-            to { opacity: 1; transform: scale(1); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body class="text-gray-800 flex flex-col items-center justify-center min-h-screen p-4">
+
     <div class="w-full max-w-5xl mx-auto text-center">
         <h1 class="text-3xl md:text-4xl text-gray-800 mb-2">Konfiguracja Elektronowa</h1>
         <div id="level-title" class="text-lg text-pink-500 h-8 mb-2"></div>
-        <div id="stats" class="text-base md:text-lg mb-4 h-16 flex flex-col justify-center">
-            <p id="info"></p>
-        </div>
+        <div id="stats" class="text-base md:text-lg mb-4 h-16 flex flex-col justify-center"></div>
     </div>
 
     <div id="game-container" class="relative w-full max-w-5xl h-[26rem] bg-white border-2 border-gray-300 rounded-lg overflow-hidden shadow-lg">
         
-        <div id="start-screen" class="absolute inset-0 bg-white/95 p-6 overflow-y-auto z-30">
-            <div id="start-screen-content" class="text-center max-w-3xl mx-auto">
+        <div id="start-screen" class="absolute inset-0 bg-white/95 p-6 flex justify-center items-center z-30">
+            <div id="start-screen-content" class="text-center max-w-3xl overflow-y-auto max-h-full">
                 <h2 class="text-2xl text-gray-800 mb-4">Jak Grać?</h2>
                 <div class="text-left text-base space-y-4 mb-6">
                     <div>
@@ -80,8 +68,8 @@
             </div>
         </div>
 
-        <div id="level-start-screen" class="hidden absolute inset-0 bg-white/95 p-6 overflow-y-auto z-20">
-            <div class="level-start-screen-content text-center mx-auto">
+        <div id="level-start-screen" class="hidden absolute inset-0 bg-white/95 p-6 flex justify-center items-center z-20">
+            <div class="level-start-screen-content text-center max-w-3xl overflow-y-auto max-h-full">
                 <h2 id="level-start-title" class="text-2xl text-gray-800 mb-4"></h2>
                 <h3 class="text-lg text-pink-500 mb-2">Docelowa konfiguracja:</h3>
                 <p id="level-start-config" class="text-xl text-gray-700 mb-8"></p>
@@ -95,7 +83,6 @@
     
     <script>
     (function() {
-        // Wszystkie stałe (player, gameContainer, itd.) bez zmian
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('game-container');
         const stats = document.getElementById('stats');
@@ -123,7 +110,6 @@
             gameOver: true,
             gameStarted: false,
             levelScreenActive: false,
-            // DODANE: Kluczowy element - blokada akcji
             actionLocked: false,
             currentLevelIndex: 0,
             progress: {},
@@ -140,8 +126,6 @@
             levelTitle.textContent = '';
             stats.innerHTML = '';
             updatePrompts();
-            // DODANE: Odblokuj akcję, gdy gra jest gotowa na ekranie startowym
-            gameState.actionLocked = false;
         }
 
         function firstStart() {
@@ -152,7 +136,6 @@
         }
         
         function showLevelStartScreen(levelIndex) {
-            // ... (reszta funkcji bez zmian)
             const level = levels[levelIndex];
             gameState.currentLevelIndex = levelIndex;
             gameState.levelScreenActive = true;
@@ -168,8 +151,6 @@
             levelTitle.textContent = '';
             stats.innerHTML = '';
             updatePrompts();
-            // DODANE: Odblokuj akcję, gdy ekran poziomu jest gotowy
-            gameState.actionLocked = false;
         }
 
         function startLevelGameplay() {
@@ -182,8 +163,6 @@
             updateUI();
             gameLoop();
             spawnObstacle();
-            // ZMIENIONE: Nie odblokowujemy tutaj akcji, bo gra się toczy.
-            // Odblokowanie nastąpi po wykonaniu skoku.
         }
         
         function advanceToNextLevel() {
@@ -192,7 +171,6 @@
             
             if (nextLevelIndex < levels.length) {
                 levelTitle.textContent = `Poziom ${gameState.currentLevelIndex + 1} ukończony!`;
-                // Czekamy na pokazanie kolejnego ekranu, blokada zostanie zwolniona w `showLevelStartScreen`
                 setTimeout(() => showLevelStartScreen(nextLevelIndex), 2000);
             } else {
                 endGame("Gratulacje! Ukończyłeś wszystkie poziomy!", true);
@@ -209,16 +187,10 @@
 
             stats.innerHTML = `${finalMessage}<p class="start-prompt text-gray-600 mt-2 animate-pulse">Naciśnij SPACJĘ, aby zagrać ponownie.</p>`;
             updatePrompts();
-            // DODANE: Odblokuj akcję, gdy pojawi się ekran końca gry
-            gameState.actionLocked = false;
         }
 
-        // Reszta funkcji (gameLoop, checkInteractions, itd.) jest bez zmian,
-        // kluczowe zmiany są w obsłudze wejścia poniżej.
-        // ...
-        
         function jump() {
-            // ZMIENIONE: Usunięto stąd warunek sprawdzający, bo jest teraz w `handlePrimaryAction`
+            if (gameState.isJumping) return;
             gameState.isJumping = true;
             player.classList.add('jumping');
             player.addEventListener('animationend', () => {
@@ -226,38 +198,39 @@
                 gameState.isJumping = false;
             }, { once: true });
         }
-
-        // --- ZMIENIONA, KLUCZOWA LOGIKA OBSŁUGI WEJŚCIA ---
-
+        
+        // --- ZMIENIONE: Przebudowana i uproszczona logika sterowania ---
         function handlePrimaryAction() {
-            // 1. Sprawdź, czy akcja jest zablokowana. Jeśli tak, nie rób nic.
             if (gameState.actionLocked) return;
+            
+            let cooldown = 0;
 
-            // 2. Jeśli nie jest, natychmiast ją zablokuj.
-            gameState.actionLocked = true;
-
-            // 3. Wykonaj odpowiednią akcję w zależności od stanu gry
             if (!gameState.gameStarted) {
+                gameState.actionLocked = true;
                 firstStart();
-                // Blokada zostanie zwolniona w `showLevelStartScreen`
+                cooldown = 500; // Dłuższa przerwa na przejście między ekranami
             } else if (gameState.levelScreenActive) {
+                gameState.actionLocked = true;
                 startLevelGameplay();
-                // Blokada celowo POZOSTAJE aktywna, odblokuje ją pierwszy skok
+                cooldown = 500; // Dłuższa przerwa na start gry
             } else if (gameState.gameOver) {
-                gameState.gameStarted = false;
+                gameState.actionLocked = true;
+                gameState.gameStarted = false; // Resetujemy stan
                 gameState.currentLevelIndex = 0;
                 initializeGame();
-                 // Blokada zostanie zwolniona w `initializeGame`
+                cooldown = 500; // Dłuższa przerwa na powrót do menu
             } else {
-                 // Sprawdzamy, czy gracz nie jest w trakcie skoku
-                 if (!gameState.isJumping) {
+                if (!gameState.isJumping) {
+                    gameState.actionLocked = true;
                     jump();
-                 }
-                // 4. Ustaw krótki cooldown, po którym akcja zostanie odblokowana.
-                //    Zapobiega to zbyt szybkiemu, seryjnemu skakaniu.
+                    cooldown = 300; // Krótsza przerwa między skokami
+                }
+            }
+            
+            if (cooldown > 0) {
                 setTimeout(() => {
                     gameState.actionLocked = false;
-                }, 300); // 300ms przerwy między akcjami
+                }, cooldown);
             }
         }
 
@@ -273,10 +246,39 @@
             handlePrimaryAction();
         }, { passive: false });
 
+        function checkInteractions() {
+            const playerRect = player.getBoundingClientRect();
+            for (const obstacle of document.querySelectorAll('.obstacle')) {
+                const obstacleRect = obstacle.getBoundingClientRect();
+                const isColliding = !(playerRect.right < obstacleRect.left || playerRect.left > obstacleRect.right || playerRect.bottom < obstacleRect.top || playerRect.top > obstacleRect.bottom);
 
-        // ... Tutaj cała reszta funkcji bez zmian (checkInteractions, createObstacle, etc.) ...
-        // ... Wklej je tutaj, aby kod był kompletny ...
-        // Poniżej wklejam je dla pewności, że nic nie zginęło.
+                if (isColliding) {
+                    if (obstacle.dataset.isTrap === 'true') {
+                        endGame(`Wpadłeś na pułapkę (${obstacle.dataset.shell})!`);
+                        return;
+                    } else if (!obstacle.dataset.filledThisTurn) {
+                        const requiredShell = getNextRequiredShell();
+                        if(obstacle.dataset.shell === requiredShell) {
+                            const currentElectrons = gameState.progress[obstacle.dataset.shell] || 0;
+                            const targetElectrons = levels[gameState.currentLevelIndex].config[obstacle.dataset.shell];
+                            
+                            if (currentElectrons < targetElectrons) {
+                                gameState.progress[obstacle.dataset.shell] = currentElectrons + 1;
+                                obstacle.dataset.filledThisTurn = 'true';
+                                
+                                redrawElectronsInObstacle(obstacle);
+                                updateUI();
+                                
+                                if (checkLevelCompletion()) {
+                                    advanceToNextLevel();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
         function checkLevelCompletion(){const targetConfig=levels[gameState.currentLevelIndex].config;for(const shell in targetConfig){if((gameState.progress[shell]||0)<targetConfig[shell]){return false}}return true}function getNextRequiredShell(){const targetConfig=levels[gameState.currentLevelIndex].config;for(const shell of configSequence){if(targetConfig[shell]&&(gameState.progress[shell]||0)<targetConfig[shell]){return shell}}return null}function spawnObstacle(){if(gameState.gameOver)return;const requiredShell=getNextRequiredShell();if(!requiredShell)return;const lastSpawned=gameState.lastSpawnedShell;const allLevelShells=Object.keys(levels[gameState.currentLevelIndex].config);let availableToSpawn=allLevelShells.filter(s=>s!==lastSpawned);if(availableToSpawn.length===0){availableToSpawn=allLevelShells}let shellToSpawn;const shouldSpawnRequired=Math.random()>gameState.trapChance;if(shouldSpawnRequired&&availableToSpawn.includes(requiredShell)){shellToSpawn=requiredShell}else{const trapPool=availableToSpawn.filter(s=>s!==requiredShell);if(trapPool.length>0){shellToSpawn=trapPool[Math.floor(Math.random()*trapPool.length)]}else{shellToSpawn=availableToSpawn[0]}}
         gameState.lastSpawnedShell=shellToSpawn;createObstacle(shellToSpawn);clearTimeout(gameState.obstacleSpawnerTimeout);gameState.obstacleSpawnerTimeout=setTimeout(spawnObstacle,Math.random()*1000+2500)}function cleanupObstacles(){const gameRect=gameContainer.getBoundingClientRect();document.querySelectorAll('.obstacle').forEach(obstacle=>{const obstacleRect=obstacle.getBoundingClientRect();if(obstacleRect.right<gameRect.left-50){obstacle.remove()}})}function redrawElectronsInObstacle(obstacle){const shell=obstacle.dataset.shell;const electronsToDraw=gameState.progress[shell]||0;const shellType=shell.charAt(1);const numBoxes=orbitalBoxes[shellType];const orbitalBoxesInObstacle=obstacle.querySelectorAll('[data-orbital-index]');orbitalBoxesInObstacle.forEach(box=>box.innerHTML='');for(let i=1;i<=electronsToDraw;i++){const electron=document.createElement('div');electron.classList.add('w-3','h-3','bg-orange-400','rounded-full','electron');const boxIndex=(i-1)%numBoxes;const targetBox=orbitalBoxesInObstacle[boxIndex];if(targetBox){targetBox.appendChild(electron)}}}
         function createObstacle(shell){const obstacle=document.createElement('div');const shellType=shell.charAt(1);const boxCount=orbitalBoxes[shellType]||1;let obstacleWidth='w-24';let borderColor='border-gray-400';if(shellType==='s'){obstacleWidth='w-12';borderColor='border-purple-400'}if(shellType==='p'){obstacleWidth='w-32';borderColor='border-orange-400'}if(shellType==='d'){obstacleWidth='w-48';borderColor='border-blue-400'}if(shellType==='f'){obstacleWidth='w-64';borderColor='border-red-500'}obstacle.classList.add('obstacle','absolute','bottom-1',obstacleWidth,'h-12','flex','flex-col','items-center','justify-center','rounded-md','border-2','p-1','bg-white','shadow');obstacle.dataset.shell=shell;obstacle.style.animationDuration=`${gameState.obstacleSpeed}s`;const requiredShell=getNextRequiredShell();const isTrap=(shell!==requiredShell);obstacle.dataset.isTrap=isTrap;const text=document.createElement('span');text.classList.add('obstacle-text','text-xs','text-gray-700');text.textContent=shell;const electronContainer=document.createElement('div');
