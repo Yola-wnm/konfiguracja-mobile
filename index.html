@@ -21,7 +21,7 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Konfiguracja Elektronowa - Gra (Wersja 6.0 - Double Jump)</title>
+    <title>Konfiguracja Elektronowa - Gra (Wersja 7.0 - Finalna)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,15 +30,13 @@
         body { font-family: 'Lato', sans-serif; background-color: #f3f4f6; }
         h1, h2, h3, #level-title, .obstacle-text { font-family: 'Roboto Mono', monospace; font-weight: 700; }
         
-        /* ZMIENIONE: Poprawiona animacja, piłka wraca na swoje miejsce */
         @keyframes jump {
             0%   { bottom: 5px;  left: 8rem; }
             50%  { bottom: 230px; left: 12rem; }
             100% { bottom: 5px;  left: 8rem; }
         }
         
-        /* ZMIENIONE: Skrócony czas skoku dla lepszej responsywności */
-        .jumping { animation: jump 1.2s ease-out; }
+        .jumping { animation: jump 1.3s ease-out; }
 
         @keyframes obstacle-move { from { right: -250px; } to { right: 150%; } }
         .obstacle { animation-name: obstacle-move; animation-timing-function: linear; }
@@ -91,7 +89,6 @@
     
     <script>
     (function() {
-        // ... stałe bez zmian ...
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('game-container');
         const stats = document.getElementById('stats');
@@ -116,7 +113,7 @@
         
         let gameState = {
             isJumping: false,
-            // DODANE: Stany dla podwójnego skoku
+            // Stany dla podwójnego skoku
             jumpsMade: 0,
             maxJumps: 2,
             gameOver: true,
@@ -172,7 +169,7 @@
             levelStartScreen.classList.add('hidden');
             gameState.progress = {};
             gameState.gameOver = false;
-            gameState.jumpsMade = 0; // Resetuj skoki na start
+            gameState.jumpsMade = 0; // Resetuj skoki
             gameState.lastSpawnedShell = null;
             document.querySelectorAll('.obstacle').forEach(o => o.remove());
             updateUI();
@@ -180,21 +177,19 @@
             spawnObstacle();
         }
 
-        // --- ZMIENIONA: Logika skoku ---
         function jump() {
             gameState.isJumping = true;
             gameState.jumpsMade++;
             
-            // Reset animacji, aby podwójny skok był płynny
+            // Trick do resetowania animacji w locie
             player.classList.remove('jumping');
-            void player.offsetWidth; // Sztuczka wymuszająca na przeglądarce ponowne przeliczenie stylów
+            void player.offsetWidth; 
             player.classList.add('jumping');
         }
 
         function handleLanding() {
-            // Ta funkcja będzie wywoływana, gdy piłka wyląduje
             gameState.isJumping = false;
-            gameState.jumpsMade = 0; // Zresetuj licznik skoków
+            gameState.jumpsMade = 0; // Resetuj licznik skoków po lądowaniu
         }
 
         function handlePrimaryAction() {
@@ -217,11 +212,11 @@
                 initializeGame();
                 cooldown = 500;
             } else {
-                // ZMIENIONE: Logika dla podwójnego skoku
+                // Logika dla podwójnego skoku
                 if (gameState.jumpsMade < gameState.maxJumps) {
                     gameState.actionLocked = true;
                     jump();
-                    cooldown = 200; // Krótszy cooldown dla responsywnych doskoków
+                    cooldown = 200; // Krótki cooldown między skokami
                 }
             }
             
@@ -244,9 +239,8 @@
             handlePrimaryAction();
         }, { passive: false });
         
-        // Nasłuchuj końca animacji, aby wykryć lądowanie
+        // Wykrywanie lądowania po zakończeniu animacji
         player.addEventListener('animationend', handleLanding);
-
 
         // --- Reszta funkcji pomocniczych (bez zmian) ---
         function gameLoop() {
@@ -262,7 +256,6 @@
         function advanceToNextLevel() {
             gameState.gameOver = true;
             const nextLevelIndex = gameState.currentLevelIndex + 1;
-            
             if (nextLevelIndex < levels.length) {
                 levelTitle.textContent = `Poziom ${gameState.currentLevelIndex + 1} ukończony!`;
                 setTimeout(() => showLevelStartScreen(nextLevelIndex), 2000);
@@ -273,11 +266,7 @@
         function endGame(reason, isVictory = false) {
             gameState.gameOver = true;
             document.querySelectorAll('.obstacle').forEach(o => o.style.animationPlayState = 'paused');
-            
-            const finalMessage = isVictory ? 
-                `<p class="text-green-500 text-2xl">${reason}</p>` :
-                `<p class="text-red-500 text-xl">KONIEC GRY!</p><p class="text-gray-600 mt-1">${reason}</p>`;
-
+            const finalMessage = isVictory ? `<p class="text-green-500 text-2xl">${reason}</p>` : `<p class="text-red-500 text-xl">KONIEC GRY!</p><p class="text-gray-600 mt-1">${reason}</p>`;
             stats.innerHTML = `${finalMessage}<p class="start-prompt text-gray-600 mt-2 animate-pulse">Naciśnij SPACJĘ, aby zagrać ponownie.</p>`;
             updatePrompts();
         }
@@ -286,7 +275,6 @@
             for (const obstacle of document.querySelectorAll('.obstacle')) {
                 const obstacleRect = obstacle.getBoundingClientRect();
                 const isColliding = !(playerRect.right < obstacleRect.left || playerRect.left > obstacleRect.right || playerRect.bottom < obstacleRect.top || playerRect.top > obstacleRect.bottom);
-
                 if (isColliding) {
                     if (obstacle.dataset.isTrap === 'true') {
                         endGame(`Wpadłeś na pułapkę (${obstacle.dataset.shell})!`);
@@ -296,7 +284,6 @@
                         if(obstacle.dataset.shell === requiredShell) {
                             const currentElectrons = gameState.progress[obstacle.dataset.shell] || 0;
                             const targetElectrons = levels[gameState.currentLevelIndex].config[obstacle.dataset.shell];
-                            
                             if (currentElectrons < targetElectrons) {
                                 gameState.progress[obstacle.dataset.shell] = currentElectrons + 1;
                                 obstacle.dataset.filledThisTurn = 'true';
