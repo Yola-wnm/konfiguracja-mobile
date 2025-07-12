@@ -21,7 +21,7 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Konfiguracja Elektronowa - Gra (Wersja 5.0 - Lepszy Skok)</title>
+    <title>Konfiguracja Elektronowa - Gra (Wersja 5.1 - Dłuższy Skok)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,10 +30,10 @@
         body { font-family: 'Lato', sans-serif; background-color: #f3f4f6; }
         h1, h2, h3, #level-title, .obstacle-text { font-family: 'Roboto Mono', monospace; font-weight: 700; }
         
-        /* ZMIENIONE: Dodano ruch w poziomie do animacji skoku */
+        /* ZMIENIONE: Dłuższy, bardziej paraboliczny skok */
         @keyframes jump {
             0%   { bottom: 5px;  left: 8rem; }
-            50%  { bottom: 240px; left: 12rem; } /* Piłka leci do przodu w szczycie skoku */
+            50%  { bottom: 240px; left: 14.6rem; } /* Zwiększone wychylenie do przodu */
             100% { bottom: 5px;  left: 8rem; }
         }
         
@@ -89,8 +89,7 @@
     </div>
     
     <script>
-    // Cały skrypt JavaScript pozostaje bez zmian, ponieważ logika gry jest już poprawna.
-    // Poniżej znajduje się ten sam, działający skrypt z poprzedniej wersji.
+    // Cały skrypt JavaScript pozostaje bez zmian.
     (function() {
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('game-container');
