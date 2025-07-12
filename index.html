@@ -33,11 +33,11 @@
         /* ZMIENIONE: Dłuższy, bardziej paraboliczny skok */
         @keyframes jump {
             0%   { bottom: 5px;  left: 8rem; }
-            50%  { bottom: 240px; left: 13rem; } /* Zwiększone wychylenie do przodu */
-            100% { bottom: 5px;  left: 15rem; }
+            50%  { bottom: 240px; left: 12rem; } /* Zwiększone wychylenie do przodu */
+            100% { bottom: 5px;  left: 14rem; }
         }
         
-        .jumping { animation: jump 1.5s ease-out; }
+        .jumping { animation: jump 1.0s ease-out; }
         @keyframes obstacle-move { from { right: -250px; } to { right: 150%; } }
         .obstacle { animation-name: obstacle-move; animation-timing-function: linear; }
         .electron { animation: fadeIn 0.3s ease-in; }
