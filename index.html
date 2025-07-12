@@ -21,7 +21,7 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Konfiguracja Elektronowa - Gra (Wersja 4.0 Finalna)</title>
+    <title>Konfiguracja Elektronowa - Gra (Wersja 5.0 - Lepszy Skok)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,7 +29,14 @@
     <style>
         body { font-family: 'Lato', sans-serif; background-color: #f3f4f6; }
         h1, h2, h3, #level-title, .obstacle-text { font-family: 'Roboto Mono', monospace; font-weight: 700; }
-        @keyframes jump { 0% { bottom: 5px; } 50% { bottom: 240px; } 100% { bottom: 5px; } }
+        
+        /* ZMIENIONE: Dodano ruch w poziomie do animacji skoku */
+        @keyframes jump {
+            0%   { bottom: 5px;  left: 8rem; }
+            50%  { bottom: 240px; left: 12rem; } /* Piłka leci do przodu w szczycie skoku */
+            100% { bottom: 5px;  left: 8rem; }
+        }
+        
         .jumping { animation: jump 1.5s ease-out; }
         @keyframes obstacle-move { from { right: -250px; } to { right: 110%; } }
         .obstacle { animation-name: obstacle-move; animation-timing-function: linear; }
@@ -76,12 +83,14 @@
                 <p class="start-prompt text-gray-600 text-lg animate-pulse">Naciśnij SPACJĘ, aby kontynuować</p>
             </div>
         </div>
-
+        
         <div id="player" class="absolute bottom-1 left-32 w-8 h-8 bg-pink-500 rounded-full shadow-md"></div>
         <div class="absolute bottom-0 left-0 w-full h-1 bg-gray-300"></div>
     </div>
     
     <script>
+    // Cały skrypt JavaScript pozostaje bez zmian, ponieważ logika gry jest już poprawna.
+    // Poniżej znajduje się ten sam, działający skrypt z poprzedniej wersji.
     (function() {
         const player = document.getElementById('player');
         const gameContainer = document.getElementById('game-container');
@@ -190,7 +199,6 @@
         }
 
         function jump() {
-            // Ta funkcja już jest poprawna, nie wymaga sprawdzania `isJumping`
             gameState.isJumping = true;
             player.classList.add('jumping');
             player.addEventListener('animationend', () => {
@@ -199,7 +207,6 @@
             }, { once: true });
         }
         
-        // --- ZMIENIONE: Ostateczna, poprawna logika sterowania ---
         function handlePrimaryAction() {
             if (gameState.actionLocked) return;
             
@@ -220,7 +227,6 @@
                 initializeGame();
                 cooldown = 500;
             } else {
-                // POPRAWKA: Blokada jest ustawiana tylko wtedy, gdy skok jest możliwy
                 if (!gameState.isJumping) {
                     gameState.actionLocked = true;
                     jump();
@@ -247,7 +253,6 @@
             handlePrimaryAction();
         }, { passive: false });
 
-        // --- Pozostałe funkcje gry bez zmian ---
         function gameLoop() {
             if (gameState.gameOver) {
                 cancelAnimationFrame(gameState.gameLoopId);
